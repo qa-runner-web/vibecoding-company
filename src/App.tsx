@@ -22,6 +22,7 @@ import { NewVibeModal } from './components/NewVibeModal';
 import { GeminiGenerator } from './components/GeminiGenerator';
 import { PromptVault } from './components/PromptVault';
 import { BlakePlaybook } from './components/BlakePlaybook';
+import { VIBE_CATEGORIES } from './categories';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
@@ -57,7 +58,7 @@ export function App() {
     setVibes((prev) => [newVibe, ...prev]);
   };
 
-  const categories = ['All', 'Creative AI', 'DevTools', 'Vibecoding', 'SaaS', 'Crypto Vibe'];
+  const categories = ['All', ...VIBE_CATEGORIES];
 
   const filteredVibes = vibes.filter((v) => {
     const matchesCategory = selectedCategory === 'All' || v.category === selectedCategory;
