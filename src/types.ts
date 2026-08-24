@@ -1,9 +1,13 @@
+export const VIBE_CATEGORIES = ['Creative AI', 'DevTools', 'Vibecoding', 'SaaS', 'Crypto Vibe', 'Agent Flow'] as const;
+
+export type VibeCategory = (typeof VIBE_CATEGORIES)[number];
+
 export interface VibeProject {
   id: string;
   title: string;
   slug: string;
   description: string;
-  category: string;
+  category: VibeCategory;
   vibe_score: number;
   tech_stack: string[];
   prompt_seed: string;

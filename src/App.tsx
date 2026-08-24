@@ -16,7 +16,7 @@ import {
   Filter
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { VibeProject } from './types';
+import { VIBE_CATEGORIES, VibeProject } from './types';
 import { VibeCard } from './components/VibeCard';
 import { NewVibeModal } from './components/NewVibeModal';
 import { GeminiGenerator } from './components/GeminiGenerator';
@@ -57,7 +57,7 @@ export function App() {
     setVibes((prev) => [newVibe, ...prev]);
   };
 
-  const categories = ['All', 'Creative AI', 'DevTools', 'Vibecoding', 'SaaS', 'Crypto Vibe'];
+  const categories = ['All', ...VIBE_CATEGORIES];
 
   const filteredVibes = vibes.filter((v) => {
     const matchesCategory = selectedCategory === 'All' || v.category === selectedCategory;

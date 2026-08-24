@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Zap, PlusCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { VibeProject } from '../types';
+import { VIBE_CATEGORIES, VibeCategory, VibeProject } from '../types';
 
 interface NewVibeModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface NewVibeModalProps {
 export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onAdded }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('AI Tool');
+  const [category, setCategory] = useState<VibeCategory>(VIBE_CATEGORIES[0]);
   const [techStackInput, setTechStackInput] = useState('Next.js, Gemini 2.0, Supabase, Tailwind');
   const [promptSeed, setPromptSeed] = useState('');
   const [status, setStatus] = useState<'shipped' | 'vibing' | 'cooked' | 'ideating'>('vibing');
@@ -102,15 +102,12 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => setCategory(e.target.value as VibeCategory)}
                 className="w-full px-3 py-2 rounded-xl bg-[#09090f] border border-slate-700 text-white focus:outline-none focus:border-cyan-400 text-sm"
               >
-                <option>Creative AI</option>
-                <option>DevTools</option>
-                <option>Vibecoding</option>
-                <option>SaaS</option>
-                <option>Crypto Vibe</option>
-                <option>Agent Flow</option>
+                {VIBE_CATEGORIES.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
               </select>
             </div>
 
