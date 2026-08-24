@@ -12,20 +12,36 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
   const [stars, setStars] = useState(project.stars);
   const [hasStarred, setHasStarred] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [isUpdatingStar, setIsUpdatingStar] = useState(false);
+  const [starError, setStarError] = useState<string | null>(null);
 
   const handleStar = async () => {
-    const updatedStars = hasStarred ? stars - 1 : stars + 1;
+    if (isUpdatingStar) return;
+
+    const previousStars = stars;
+    const previousHasStarred = hasStarred;
+    const updatedStars = previousHasStarred ? previousStars - 1 : previousStars + 1;
+
     setStars(updatedStars);
-    setHasStarred(!hasStarred);
+    setHasStarred(!previousHasStarred);
+    setIsUpdatingStar(true);
+    setStarError(null);
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('vibes')
         .update({ stars: updatedStars })
         .eq('id', project.id);
-      if (onStarUpdate) onStarUpdate(project.id, updatedStars);
-    } catch (e) {
-      console.error('Failed to update star in Supabase', e);
+
+      if (error) throw error;
+      onStarUpdate?.(project.id, updatedStars);
+    } catch (error) {
+      setStars(previousStars);
+      setHasStarred(previousHasStarred);
+      setStarError("Couldn't update star. Try again.");
+      console.error('Failed to update star in Supabase', error);
+    } finally {
+      setIsUpdatingStar(false);
     }
   };
 
@@ -127,10 +143,13 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
             by <span className="text-slate-300 font-medium">@{project.author}</span>
           </span>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end gap-1">
             <button
               onClick={handleStar}
-              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              disabled={isUpdatingStar}
+              aria-label={`${hasStarred ? 'Unstar' : 'Star'} ${project.title}`}
+              aria-pressed={hasStarred}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:cursor-wait disabled:opacity-60 ${
                 hasStarred
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
@@ -139,6 +158,11 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
               <Star className={`w-3.5 h-3.5 ${hasStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
               <span>{stars}</span>
             </button>
+            {starError && (
+              <span role="status" className="text-[10px] text-red-400">
+                {starError}
+              </span>
+            )}
           </div>
         </div>
       </div>
