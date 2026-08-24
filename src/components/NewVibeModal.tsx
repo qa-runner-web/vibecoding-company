@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { X, Sparkles, Zap, PlusCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Sparkles, PlusCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { VibeProject } from '../types';
+import { VibeProject, VIBE_CATEGORIES, VibeCategory, ProjectStatus } from '../types';
 
 interface NewVibeModalProps {
   isOpen: boolean;
@@ -9,14 +9,45 @@ interface NewVibeModalProps {
   onAdded: (vibe: VibeProject) => void;
 }
 
+const DEFAULT_CATEGORY: VibeCategory = VIBE_CATEGORIES[0];
+const DEFAULT_TECH_STACK = 'Next.js, Gemini 2.0, Supabase, Tailwind';
+
 export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onAdded }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('AI Tool');
-  const [techStackInput, setTechStackInput] = useState('Next.js, Gemini 2.0, Supabase, Tailwind');
+  const [category, setCategory] = useState<VibeCategory>(DEFAULT_CATEGORY);
+  const [techStackInput, setTechStackInput] = useState(DEFAULT_TECH_STACK);
   const [promptSeed, setPromptSeed] = useState('');
-  const [status, setStatus] = useState<'shipped' | 'vibing' | 'cooked' | 'ideating'>('vibing');
+  const [status, setStatus] = useState<ProjectStatus>('vibing');
   const [loading, setLoading] = useState(false);
+
+  const resetForm = useCallback(() => {
+    setTitle('');
+    setDescription('');
+    setCategory(DEFAULT_CATEGORY);
+    setTechStackInput(DEFAULT_TECH_STACK);
+    setPromptSeed('');
+    setStatus('vibing');
+    setLoading(false);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    resetForm();
+    onClose();
+  }, [onClose, resetForm]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
 
@@ -25,17 +56,26 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
     if (!title.trim()) return;
 
     setLoading(true);
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.floor(Math.random() * 1000);
-    const tech_stack = techStackInput.split(',').map((t) => t.trim()).filter(Boolean);
+    const slug =
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') +
+      '-' +
+      Math.floor(Math.random() * 1000);
+    const tech_stack = techStackInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
 
     const newVibe = {
-      title,
+      title: title.trim(),
       slug,
-      description,
+      description: description.trim(),
       category,
       vibe_score: Math.floor(Math.random() * 5) + 95,
-      tech_stack,
-      prompt_seed: promptSeed || 'Build a next-level reactive AI tool in one prompt.',
+      tech_stack: tech_stack.length > 0 ? tech_stack : ['React 19', 'Gemini 2.0', 'Tailwind CSS'],
+      prompt_seed: promptSeed.trim() || 'Build a next-level reactive AI tool in one prompt.',
       author: 'blake',
       status,
       stars: 1,
@@ -45,7 +85,7 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
       const { data, error } = await supabase.from('vibes').insert(newVibe).select().single();
       if (error) throw error;
       onAdded(data);
-      onClose();
+      handleClose();
     } catch (err) {
       console.error('Failed to create vibe in Supabase', err);
       // Local fallback
@@ -54,18 +94,25 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
         id: crypto.randomUUID(),
         created_at: new Date().toISOString(),
       });
-      onClose();
-    } finally {
-      setLoading(false);
+      handleClose();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="relative w-full max-w-lg rounded-2xl bg-[#12121c] border border-cyan-500/30 p-6 shadow-2xl shadow-cyan-500/10">
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+          onClick={handleClose}
+          type="button"
+          aria-label="Close modal"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -102,15 +149,14 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => setCategory(e.target.value as VibeCategory)}
                 className="w-full px-3 py-2 rounded-xl bg-[#09090f] border border-slate-700 text-white focus:outline-none focus:border-cyan-400 text-sm"
               >
-                <option>Creative AI</option>
-                <option>DevTools</option>
-                <option>Vibecoding</option>
-                <option>SaaS</option>
-                <option>Crypto Vibe</option>
-                <option>Agent Flow</option>
+                {VIBE_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -120,7 +166,7 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
               </label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => setStatus(e.target.value as ProjectStatus)}
                 className="w-full px-3 py-2 rounded-xl bg-[#09090f] border border-slate-700 text-white focus:outline-none focus:border-cyan-400 text-sm"
               >
                 <option value="vibing">Vibing Live</option>
@@ -173,15 +219,15 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-sm font-medium"
+              onClick={handleClose}
+              className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-sm shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-sm shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all"
             >
               <PlusCircle className="w-4 h-4" />
               {loading ? 'Publishing...' : 'Publish Vibe'}

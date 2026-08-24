@@ -1,3 +1,16 @@
+export const VIBE_CATEGORIES = [
+  'Creative AI',
+  'DevTools',
+  'Vibecoding',
+  'SaaS',
+  'Crypto Vibe',
+  'Agent Flow',
+] as const;
+
+export type VibeCategory = typeof VIBE_CATEGORIES[number];
+
+export type ProjectStatus = 'shipped' | 'vibing' | 'cooked' | 'ideating';
+
 export interface VibeProject {
   id: string;
   title: string;
@@ -8,7 +21,7 @@ export interface VibeProject {
   tech_stack: string[];
   prompt_seed: string;
   author: string;
-  status: 'shipped' | 'vibing' | 'cooked' | 'ideating';
+  status: ProjectStatus;
   stars: number;
   created_at: string;
 }

@@ -1,27 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   Sparkles, 
   Zap, 
-  Flame, 
   Bot, 
   Terminal, 
   BookOpen, 
   PlusCircle, 
   Github, 
-  ExternalLink, 
-  Database, 
   CheckCircle2, 
-  Radio,
   Search,
-  Filter
+  ArrowUpDown,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { VibeProject } from './types';
+import { VibeProject, VIBE_CATEGORIES } from './types';
 import { VibeCard } from './components/VibeCard';
 import { NewVibeModal } from './components/NewVibeModal';
 import { GeminiGenerator } from './components/GeminiGenerator';
 import { PromptVault } from './components/PromptVault';
 import { BlakePlaybook } from './components/BlakePlaybook';
+
+const FALLBACK_VIBES: VibeProject[] = [
+  {
+    id: 'fallback-vibe-1',
+    title: 'Aesthetic Neural Canvas',
+    slug: 'neural-canvas',
+    description: 'Infinite generative canvas reacting to ambient music with Gemini + WebGL shaders',
+    category: 'Creative AI',
+    vibe_score: 100,
+    tech_stack: ['Next.js', 'Gemini 2.0', 'Three.js', 'Supabase'],
+    prompt_seed: 'Generate a reactive 3D visualizer based on audio frequency harmonics',
+    author: 'blake',
+    status: 'shipped',
+    stars: 128,
+    created_at: '2026-08-23T08:54:27.234059+00:00',
+  },
+  {
+    id: 'fallback-vibe-2',
+    title: 'Agentic PR Roaster 3000',
+    slug: 'pr-roaster',
+    description: 'Drop a GitHub PR link and watch Gemini roast your commits in the voice of a grumpy senior dev',
+    category: 'DevTools',
+    vibe_score: 98,
+    tech_stack: ['Next.js', 'Gemini 2.0', 'Octokit', 'Tailwind'],
+    prompt_seed: 'Roast this pull request with savage technical accuracy and hilarious metaphors',
+    author: 'blake',
+    status: 'shipped',
+    stars: 94,
+    created_at: '2026-08-23T08:54:27.234059+00:00',
+  },
+  {
+    id: 'fallback-vibe-3',
+    title: 'Vibecode Maxxing Hub',
+    slug: 'vibecode-maxxing',
+    description: 'Blake’s command center for one-prompt full-stack apps, automated Supabase schema generation, and instant Vercel deploys',
+    category: 'Vibecoding',
+    vibe_score: 99,
+    tech_stack: ['Next.js', 'Gemini 2.0', 'Supabase', 'Vercel'],
+    prompt_seed: 'Max out development speed: prompt to live URL in under 60 seconds with zero boilerplate',
+    author: 'blake',
+    status: 'shipped',
+    stars: 256,
+    created_at: '2026-08-23T08:54:27.234059+00:00',
+  },
+  {
+    id: 'fallback-vibe-4',
+    title: 'Micro-SaaS Idea Generator',
+    slug: 'saas-generator',
+    description: 'Gemini analyzes high-converting niche subreddits and spits out verified high-margin SaaS specs',
+    category: 'SaaS',
+    vibe_score: 95,
+    tech_stack: ['React', 'Gemini Flash', 'Supabase', 'Shadcn UI'],
+    prompt_seed: 'Generate 3 ultra-specific B2B micro-SaaS concepts with pricing tier models',
+    author: 'blake',
+    status: 'vibing',
+    stars: 67,
+    created_at: '2026-08-23T08:54:27.234059+00:00',
+  },
+  {
+    id: 'fallback-vibe-5',
+    title: 'Solana Memecoin Analyzer',
+    slug: 'sol-analyzer',
+    description: 'Instant sentiment extraction across 5,000 Telegram channels and DexScreener charts',
+    category: 'Crypto Vibe',
+    vibe_score: 92,
+    tech_stack: ['Next.js', 'Supabase Realtime', 'Gemini 2.0'],
+    prompt_seed: 'Summarize telegram meme velocity and flag honeypot smart contracts',
+    author: 'blake',
+    status: 'ideating',
+    stars: 43,
+    created_at: '2026-08-23T08:54:27.234059+00:00',
+  },
+];
+
+type SortOption = 'stars' | 'vibe_score' | 'newest';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
@@ -29,6 +101,7 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('stars');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -43,11 +116,14 @@ export function App() {
         .select('*')
         .order('stars', { ascending: false });
 
-      if (data && !error) {
+      if (data && !error && data.length > 0) {
         setVibes(data);
+      } else {
+        setVibes(FALLBACK_VIBES);
       }
     } catch (e) {
-      console.error('Error fetching vibes', e);
+      console.error('Error fetching vibes from Supabase, using fallback data', e);
+      setVibes(FALLBACK_VIBES);
     } finally {
       setLoading(false);
     }
@@ -57,19 +133,39 @@ export function App() {
     setVibes((prev) => [newVibe, ...prev]);
   };
 
-  const categories = ['All', 'Creative AI', 'DevTools', 'Vibecoding', 'SaaS', 'Crypto Vibe'];
+  const categories = ['All', ...VIBE_CATEGORIES];
 
-  const filteredVibes = vibes.filter((v) => {
-    const matchesCategory = selectedCategory === 'All' || v.category === selectedCategory;
-    const matchesSearch =
-      v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.tech_stack.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  const filteredVibes = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    const result = vibes.filter((v) => {
+      const matchesCategory = selectedCategory === 'All' || v.category === selectedCategory;
+      const matchesSearch =
+        !query ||
+        v.title.toLowerCase().includes(query) ||
+        v.description.toLowerCase().includes(query) ||
+        (v.tech_stack && v.tech_stack.some((t) => t.toLowerCase().includes(query)));
+      return matchesCategory && matchesSearch;
+    });
+
+    return result.sort((a, b) => {
+      if (sortBy === 'stars') {
+        return (b.stars || 0) - (a.stars || 0);
+      }
+      if (sortBy === 'vibe_score') {
+        return (b.vibe_score || 0) - (a.vibe_score || 0);
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      }
+      return 0;
+    });
+  }, [vibes, selectedCategory, searchQuery, sortBy]);
 
   const totalStars = vibes.reduce((acc, v) => acc + (v.stars || 0), 0);
-  const avgVibeScore = vibes.length > 0 ? (vibes.reduce((acc, v) => acc + v.vibe_score, 0) / vibes.length).toFixed(1) : '99.0';
+  const avgVibeScore =
+    vibes.length > 0
+      ? (vibes.reduce((acc, v) => acc + (v.vibe_score || 0), 0) / vibes.length).toFixed(1)
+      : '99.0';
 
   return (
     <div className="min-h-screen bg-[#08080d] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-black">
@@ -212,16 +308,17 @@ export function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         {activeTab === 'gallery' && (
           <div className="space-y-6">
-            {/* Filter & Search Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+            {/* Filter & Search & Sort Bar */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all whitespace-nowrap ${
                       selectedCategory === cat
-                        ? 'bg-white text-black font-bold'
+                        ? 'bg-white text-black font-bold shadow-md'
                         : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
@@ -230,15 +327,32 @@ export function App() {
                 ))}
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search vibes, stack, prompts..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-                />
+              {/* Controls: Search and Sort */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search vibes, stack, prompts..."
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <ArrowUpDown className="w-4 h-4 text-slate-500 hidden sm:block" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    aria-label="Sort projects"
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-400"
+                  >
+                    <option value="stars">★ Most Stars</option>
+                    <option value="vibe_score">⚡ Highest Vibe Score</option>
+                    <option value="newest">🕒 Newest</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -248,8 +362,19 @@ export function App() {
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
               </div>
             ) : filteredVibes.length === 0 ? (
-              <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800">
+              <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800 space-y-3">
                 <p className="text-slate-400 font-mono text-sm">No vibe projects found matching filter.</p>
+                {(selectedCategory !== 'All' || searchQuery) && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('All');
+                      setSearchQuery('');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-cyan-400 text-xs font-mono border border-slate-800 hover:border-cyan-500/40 transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Reset Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

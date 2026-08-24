@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Zap, Terminal, ExternalLink, Sparkles, Flame, CheckCircle2, Clock } from 'lucide-react';
+import { Star, Zap, Terminal, Sparkles, Flame, CheckCircle2, Clock } from 'lucide-react';
 import { VibeProject } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -9,12 +9,12 @@ interface VibeCardProps {
 }
 
 export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => {
-  const [stars, setStars] = useState(project.stars);
+  const [stars, setStars] = useState(project.stars ?? 0);
   const [hasStarred, setHasStarred] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   const handleStar = async () => {
-    const updatedStars = hasStarred ? stars - 1 : stars + 1;
+    const updatedStars = hasStarred ? Math.max(0, stars - 1) : stars + 1;
     setStars(updatedStars);
     setHasStarred(!hasStarred);
 
@@ -29,10 +29,26 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
     }
   };
 
-  const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(project.prompt_seed);
-    setCopiedPrompt(true);
-    setTimeout(() => setCopiedPrompt(false), 2000);
+  const handleCopyPrompt = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(project.prompt_seed);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = project.prompt_seed;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy prompt', err);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -91,7 +107,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
 
         {/* Tech Stack Pills */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {project.tech_stack.map((tech, idx) => (
+          {project.tech_stack?.map((tech, idx) => (
             <span
               key={idx}
               className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900/80 text-slate-300 border border-slate-800"
@@ -111,7 +127,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
             </span>
             <button
               onClick={handleCopyPrompt}
-              className="text-cyan-400 hover:text-cyan-300 text-[11px] font-semibold"
+              className="text-cyan-400 hover:text-cyan-300 text-[11px] font-semibold transition-colors"
             >
               {copiedPrompt ? 'Copied! ✓' : 'Copy'}
             </button>
@@ -124,12 +140,13 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
         {/* Bottom Actions */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-800/60">
           <span className="text-xs text-slate-500 font-mono">
-            by <span className="text-slate-300 font-medium">@{project.author}</span>
+            by <span className="text-slate-300 font-medium">@{project.author || 'blake'}</span>
           </span>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleStar}
+              aria-label="Star project"
               className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                 hasStarred
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
