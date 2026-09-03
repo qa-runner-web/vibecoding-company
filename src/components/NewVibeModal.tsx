@@ -17,6 +17,7 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
   const [promptSeed, setPromptSeed] = useState('');
   const [status, setStatus] = useState<'shipped' | 'vibing' | 'cooked' | 'ideating'>('vibing');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -25,6 +26,7 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
     if (!title.trim()) return;
 
     setLoading(true);
+    setErrorMessage(null);
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.floor(Math.random() * 1000);
     const tech_stack = techStackInput.split(',').map((t) => t.trim()).filter(Boolean);
 
@@ -48,13 +50,7 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
       onClose();
     } catch (err) {
       console.error('Failed to create vibe in Supabase', err);
-      // Local fallback
-      onAdded({
-        ...newVibe,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-      });
-      onClose();
+      setErrorMessage('We could not publish this project. Your changes are still here—please try again.');
     } finally {
       setLoading(false);
     }
@@ -169,6 +165,12 @@ export const NewVibeModal: React.FC<NewVibeModalProps> = ({ isOpen, onClose, onA
               className="w-full px-3 py-2 rounded-xl bg-[#09090f] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm font-mono resize-none"
             />
           </div>
+
+          {errorMessage && (
+            <p role="alert" className="rounded-xl border border-red-900/60 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+              {errorMessage}
+            </p>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <button

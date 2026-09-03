@@ -27,6 +27,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
   const [vibes, setVibes] = useState<VibeProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,11 +44,12 @@ export function App() {
         .select('*')
         .order('stars', { ascending: false });
 
-      if (data && !error) {
-        setVibes(data);
-      }
+      if (error) throw error;
+      setVibes(data ?? []);
+      setLoadError(null);
     } catch (e) {
       console.error('Error fetching vibes', e);
+      setLoadError('We could not load the live vibe gallery. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -246,6 +248,17 @@ export function App() {
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
+              </div>
+            ) : loadError ? (
+              <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-red-900/60">
+                <p className="text-red-300 font-mono text-sm">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={fetchVibes}
+                  className="mt-4 px-4 py-2 rounded-xl bg-cyan-500 text-black text-sm font-bold hover:bg-cyan-400 transition-colors"
+                >
+                  Retry loading
+                </button>
               </div>
             ) : filteredVibes.length === 0 ? (
               <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800">
