@@ -8,6 +8,7 @@ export const GeminiGenerator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState<{ text: string; vibeScore: number; techStack: string[] } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const presetIdeas = [
     'Sub-50ms Markdown notes app that auto-links everything with Gemini embeddings',
@@ -22,11 +23,13 @@ export const GeminiGenerator: React.FC = () => {
     if (ideaPrompt) setPrompt(ideaPrompt);
 
     setLoading(true);
+    setError(null);
     try {
       const res = await generateVibeWithGemini(textToRun, style);
       setOutput(res);
     } catch (e) {
       console.error('Generation error', e);
+      setError('The blueprint could not be generated. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -102,6 +105,10 @@ export const GeminiGenerator: React.FC = () => {
             {loading ? 'Synthesizing...' : 'Vibecode It'}
           </button>
         </div>
+
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-rose-400">{error}</p>
+        )}
 
         {/* Quick idea seeds */}
         <div>
