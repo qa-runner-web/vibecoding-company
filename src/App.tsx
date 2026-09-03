@@ -13,7 +13,9 @@ import {
   CheckCircle2, 
   Radio,
   Search,
-  Filter
+  Filter,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { VibeProject } from './types';
@@ -27,6 +29,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
   const [vibes, setVibes] = useState<VibeProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,16 +41,17 @@ export function App() {
   async function fetchVibes() {
     try {
       setLoading(true);
+      setLoadError(null);
       const { data, error } = await supabase
         .from('vibes')
         .select('*')
         .order('stars', { ascending: false });
 
-      if (data && !error) {
-        setVibes(data);
-      }
+      if (error) throw error;
+      setVibes(data ?? []);
     } catch (e) {
       console.error('Error fetching vibes', e);
+      setLoadError('The live gallery could not be loaded. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -246,6 +250,17 @@ export function App() {
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
+              </div>
+            ) : loadError ? (
+              <div role="alert" className="flex flex-col items-center justify-center gap-4 py-16 bg-[#11111a] rounded-2xl border border-rose-500/30 text-center">
+                <AlertCircle className="w-8 h-8 text-rose-400" />
+                <div>
+                  <p className="text-slate-200 font-semibold">Unable to load live vibes</p>
+                  <p className="text-slate-400 font-mono text-sm mt-1">{loadError}</p>
+                </div>
+                <button onClick={fetchVibes} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-cyan-300 border border-slate-700 hover:border-cyan-400 text-sm font-semibold">
+                  <RefreshCw className="w-4 h-4" /> Retry
+                </button>
               </div>
             ) : filteredVibes.length === 0 ? (
               <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800">

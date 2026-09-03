@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Terminal, Copy, Check, Heart, Sparkles } from 'lucide-react';
+import { Terminal, Copy, Check, Heart, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import { PromptTemplate } from '../types';
 import { supabase } from '../lib/supabase';
 
 export const PromptVault: React.FC = () => {
   const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  async function loadPrompts() {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const { data, error } = await supabase.from('prompts').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setPrompts(data ?? []);
+    } catch (e) {
+      console.error('Failed to load prompts from Supabase', e);
+      setLoadError('The prompt vault could not be loaded. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadPrompts() {
-      try {
-        const { data, error } = await supabase.from('prompts').select('*').order('created_at', { ascending: false });
-        if (data && !error) {
-          setPrompts(data);
-        }
-      } catch (e) {
-        console.error('Failed to load prompts from Supabase', e);
-      }
-    }
     loadPrompts();
   }, []);
 
@@ -41,6 +48,17 @@ export const PromptVault: React.FC = () => {
         </div>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-20" aria-label="Loading prompt vault"><Sparkles className="w-8 h-8 text-cyan-400 animate-spin" /></div>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-col items-center justify-center gap-4 py-16 bg-[#11111a] rounded-2xl border border-rose-500/30 text-center">
+          <AlertCircle className="w-8 h-8 text-rose-400" />
+          <div><p className="text-slate-200 font-semibold">Unable to load prompt vault</p><p className="text-slate-400 font-mono text-sm mt-1">{loadError}</p></div>
+          <button onClick={loadPrompts} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-cyan-300 border border-slate-700 hover:border-cyan-400 text-sm font-semibold"><RefreshCw className="w-4 h-4" /> Retry</button>
+        </div>
+      ) : prompts.length === 0 ? (
+        <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800"><p className="text-slate-400 font-mono text-sm">No prompts have been published yet.</p></div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {prompts.map((p) => (
           <div
@@ -86,6 +104,7 @@ export const PromptVault: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };
