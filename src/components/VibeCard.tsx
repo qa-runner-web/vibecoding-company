@@ -11,21 +11,35 @@ interface VibeCardProps {
 export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => {
   const [stars, setStars] = useState(project.stars);
   const [hasStarred, setHasStarred] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [starError, setStarError] = useState<string | null>(null);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   const handleStar = async () => {
+    if (isSaving) return;
+
+    const previousStars = stars;
+    const previousHasStarred = hasStarred;
     const updatedStars = hasStarred ? stars - 1 : stars + 1;
     setStars(updatedStars);
     setHasStarred(!hasStarred);
+    setIsSaving(true);
+    setStarError(null);
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('vibes')
         .update({ stars: updatedStars })
         .eq('id', project.id);
-      if (onStarUpdate) onStarUpdate(project.id, updatedStars);
+      if (error) throw error;
+      onStarUpdate?.(project.id, updatedStars);
     } catch (e) {
       console.error('Failed to update star in Supabase', e);
+      setStars(previousStars);
+      setHasStarred(previousHasStarred);
+      setStarError('Could not save star. Try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -128,9 +142,12 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
           </span>
 
           <div className="flex items-center gap-2">
+            {starError && <span role="alert" className="text-[11px] text-red-400">{starError}</span>}
             <button
               onClick={handleStar}
-              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              disabled={isSaving}
+              aria-label={hasStarred ? `Remove star from ${project.title}` : `Star ${project.title}`}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:cursor-wait disabled:opacity-60 ${
                 hasStarred
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
