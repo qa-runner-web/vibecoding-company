@@ -2,6 +2,13 @@ import { supabase } from './supabase';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
+export class ProviderResponseShapeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProviderResponseShapeError';
+  }
+}
+
 export async function generateVibeWithGemini(
   prompt: string,
   style: string = '10x Speedrun'
@@ -47,11 +54,13 @@ Return a structured, ultra-inspiring breakdown containing:
       return getFallbackGeneration(prompt, style);
     }
 
-    const data = await response.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data: unknown = await response.json();
+    const candidateText = getCandidateText(data);
 
     if (!candidateText) {
-      return getFallbackGeneration(prompt, style);
+      throw new ProviderResponseShapeError(
+        'Gemini response mismatch: expected candidates[0].content.parts[0].text to be a non-empty string.'
+      );
     }
 
     try {
@@ -71,9 +80,33 @@ Return a structured, ultra-inspiring breakdown containing:
       techStack: ['React 19', 'Gemini 2.0', 'Supabase', 'Tailwind CSS', 'Vercel']
     };
   } catch (error) {
+    if (error instanceof ProviderResponseShapeError) {
+      console.error(error.message, error);
+      throw error;
+    }
+
     console.error('Error generating vibe:', error);
     return getFallbackGeneration(prompt, style);
   }
+}
+
+function getCandidateText(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+
+  const candidates = (data as { candidates?: unknown }).candidates;
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+  const content = candidates[0] && typeof candidates[0] === 'object'
+    ? (candidates[0] as { content?: unknown }).content
+    : null;
+  const parts = content && typeof content === 'object'
+    ? (content as { parts?: unknown }).parts
+    : null;
+  const text = Array.isArray(parts) && parts[0] && typeof parts[0] === 'object'
+    ? (parts[0] as { text?: unknown }).text
+    : null;
+
+  return typeof text === 'string' && text.trim() ? text : null;
 }
 
 function getFallbackGeneration(prompt: string, style: string) {
