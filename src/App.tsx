@@ -22,9 +22,10 @@ import { NewVibeModal } from './components/NewVibeModal';
 import { GeminiGenerator } from './components/GeminiGenerator';
 import { PromptVault } from './components/PromptVault';
 import { BlakePlaybook } from './components/BlakePlaybook';
+import { McpQueryConsole } from './components/McpQueryConsole';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook' | 'mcp'>('gallery');
   const [vibes, setVibes] = useState<VibeProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -195,6 +196,17 @@ export function App() {
             📜 Blake's Prompt Vault
           </button>
           <button
+            onClick={() => setActiveTab('mcp')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+              activeTab === 'mcp'
+                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+            🔎 MCP Query Console
+          </button>
+          <button
             onClick={() => setActiveTab('playbook')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
               activeTab === 'playbook'
@@ -272,6 +284,7 @@ export function App() {
         {activeTab === 'generator' && <GeminiGenerator />}
         {activeTab === 'prompts' && <PromptVault />}
         {activeTab === 'playbook' && <BlakePlaybook />}
+        {activeTab === 'mcp' && <McpQueryConsole />}
       </main>
 
       {/* Footer */}
