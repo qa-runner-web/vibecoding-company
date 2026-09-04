@@ -1,0 +1,104 @@
+{
+  "fixture": "vibecode-gallery-disposable",
+  "source": "synthetic",
+  "disposable": true,
+  "protocol": "2025-03-26",
+  "messages": [
+    {
+      "direction": "client-to-server",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+          "protocolVersion": "2025-03-26",
+          "capabilities": {},
+          "clientInfo": {
+            "name": "fixture-client",
+            "version": "0.0.0"
+          }
+        }
+      }
+    },
+    {
+      "direction": "server-to-client",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2025-03-26",
+          "capabilities": {
+            "tools": {}
+          },
+          "serverInfo": {
+            "name": "synthetic-vibe-fixture",
+            "version": "0.0.0"
+          }
+        }
+      }
+    },
+    {
+      "direction": "client-to-server",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list"
+      }
+    },
+    {
+      "direction": "server-to-client",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "tools": [
+            {
+              "name": "list_vibes",
+              "description": "Return synthetic vibe projects for local UI and integration tests.",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Optional synthetic category filter."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "direction": "client-to-server",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "list_vibes",
+          "arguments": {
+            "category": "DevTools"
+          }
+        }
+      }
+    },
+    {
+      "direction": "server-to-client",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"projects\":[{\"id\":\"fixture-vibe-001\",\"title\":\"Neon Task Loom\",\"slug\":\"neon-task-loom\",\"description\":\"A fictional keyboard-first task board for fixture demos.\",\"category\":\"DevTools\",\"vibe_score\":8.7,\"tech_stack\":[\"React\",\"TypeScript\",\"Tailwind CSS\"],\"prompt_seed\":\"Build a fictional task board with a neon status rail.\",\"author\":\"fixture-user\",\"status\":\"shipped\",\"stars\":12,\"created_at\":\"2030-01-02T03:04:05.000Z\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  ]
+}
