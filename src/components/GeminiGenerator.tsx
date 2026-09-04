@@ -7,6 +7,7 @@ export const GeminiGenerator: React.FC = () => {
   const [style, setStyle] = useState('10x Speedrun');
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState<{ text: string; vibeScore: number; techStack: string[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const presetIdeas = [
@@ -22,10 +23,13 @@ export const GeminiGenerator: React.FC = () => {
     if (ideaPrompt) setPrompt(ideaPrompt);
 
     setLoading(true);
+    setError(null);
     try {
       const res = await generateVibeWithGemini(textToRun, style);
       setOutput(res);
     } catch (e) {
+      const message = e instanceof Error ? e.message : 'Generation failed.';
+      setError(message);
       console.error('Generation error', e);
     } finally {
       setLoading(false);
@@ -119,6 +123,12 @@ export const GeminiGenerator: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div role="alert" className="rounded-2xl border border-rose-500/40 bg-rose-950/20 p-4 text-sm text-rose-200">
+          {error}
+        </div>
+      )}
 
       {/* Output card */}
       {output && (
