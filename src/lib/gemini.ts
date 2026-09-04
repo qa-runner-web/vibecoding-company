@@ -1,11 +1,19 @@
 import { supabase } from './supabase';
 
+export interface GeminiGenerationResult {
+  text: string;
+  vibeScore: number;
+  techStack: string[];
+  sourceServer: string;
+  sourceTool: string;
+}
+
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export async function generateVibeWithGemini(
   prompt: string,
   style: string = '10x Speedrun'
-): Promise<{ text: string; vibeScore: number; techStack: string[] }> {
+): Promise<GeminiGenerationResult> {
   const systemInstruction = `You are Blake's 10x Vibecoding Engine. You turn raw concepts into maximum-vibe software blueprints.
 Style preset: ${style}.
 Return a structured, ultra-inspiring breakdown containing:
@@ -68,7 +76,9 @@ Return a structured, ultra-inspiring breakdown containing:
     return {
       text: candidateText,
       vibeScore: Math.floor(Math.random() * 6) + 94,
-      techStack: ['React 19', 'Gemini 2.0', 'Supabase', 'Tailwind CSS', 'Vercel']
+      techStack: ['React 19', 'Gemini 2.0', 'Supabase', 'Tailwind CSS', 'Vercel'],
+      sourceServer: 'gemini',
+      sourceTool: 'generateVibeWithGemini'
     };
   } catch (error) {
     console.error('Error generating vibe:', error);
@@ -104,6 +114,8 @@ Instant zero-config sharing with live multiplayer cursor sync and automatic prev
   return {
     text: result,
     vibeScore: 99,
-    techStack: ['React 19', 'Gemini 2.0 Flash', 'Supabase', 'Tailwind', 'Vercel']
+    techStack: ['React 19', 'Gemini 2.0 Flash', 'Supabase', 'Tailwind', 'Vercel'],
+    sourceServer: 'gemini',
+    sourceTool: 'generateVibeWithGemini'
   };
 }

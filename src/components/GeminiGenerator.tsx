@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles, Send, Copy, Check, Flame, Zap, Database, Terminal } from 'lucide-react';
-import { generateVibeWithGemini } from '../lib/gemini';
+import { generateVibeWithGemini, type GeminiGenerationResult } from '../lib/gemini';
 
 export const GeminiGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('10x Speedrun');
   const [loading, setLoading] = useState(false);
-  const [output, setOutput] = useState<{ text: string; vibeScore: number; techStack: string[] } | null>(null);
+  const [output, setOutput] = useState<GeminiGenerationResult | null>(null);
   const [copied, setCopied] = useState(false);
 
   const presetIdeas = [
