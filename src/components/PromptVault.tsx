@@ -3,6 +3,8 @@ import { Terminal, Copy, Check, Heart, Sparkles } from 'lucide-react';
 import { PromptTemplate } from '../types';
 import { supabase } from '../lib/supabase';
 
+const MAX_RETURNED_PROMPTS = 3;
+
 export const PromptVault: React.FC = () => {
   const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -10,7 +12,11 @@ export const PromptVault: React.FC = () => {
   useEffect(() => {
     async function loadPrompts() {
       try {
-        const { data, error } = await supabase.from('prompts').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('prompts')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(MAX_RETURNED_PROMPTS);
         if (data && !error) {
           setPrompts(data);
         }
@@ -35,9 +41,10 @@ export const PromptVault: React.FC = () => {
             <Terminal className="w-5 h-5 text-cyan-400" />
             Blake's Master Prompt Vault
           </h2>
-          <p className="text-xs text-slate-400 font-mono">
-            Zero-shot prompt recipes tested with Gemini 2.0 Flash & Ara Coding Agents
-          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 font-mono">
+            <p>Zero-shot prompt recipes tested with Gemini 2.0 Flash & Ara Coding Agents</p>
+            <span className="text-cyan-400">{prompts.length} returned</span>
+          </div>
         </div>
       </div>
 
