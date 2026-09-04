@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { summarizeMcpError } from './mcpErrors';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
@@ -62,7 +63,7 @@ Return a structured, ultra-inspiring breakdown containing:
         vibe_rating: 'MAXIMUM VIBES 🔥'
       });
     } catch (e) {
-      console.error('Failed to log generation to Supabase', e);
+      console.error('Failed to log generation to Supabase', summarizeMcpError(e));
     }
 
     return {
@@ -71,7 +72,7 @@ Return a structured, ultra-inspiring breakdown containing:
       techStack: ['React 19', 'Gemini 2.0', 'Supabase', 'Tailwind CSS', 'Vercel']
     };
   } catch (error) {
-    console.error('Error generating vibe:', error);
+    console.error('Error generating vibe:', summarizeMcpError(error));
     return getFallbackGeneration(prompt, style);
   }
 }
