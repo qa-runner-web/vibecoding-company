@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   Radio,
   Search,
-  Filter
+  Filter,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { VibeProject } from './types';
@@ -27,6 +28,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
   const [vibes, setVibes] = useState<VibeProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,16 +40,20 @@ export function App() {
   async function fetchVibes() {
     try {
       setLoading(true);
+      setLoadError(false);
       const { data, error } = await supabase
         .from('vibes')
         .select('*')
         .order('stars', { ascending: false });
 
-      if (data && !error) {
-        setVibes(data);
+      if (error) {
+        throw error;
       }
+
+      setVibes(data ?? []);
     } catch (e) {
       console.error('Error fetching vibes', e);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -246,6 +252,19 @@ export function App() {
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
+              </div>
+            ) : loadError ? (
+              <div role="alert" className="text-center py-16 px-6 bg-[#11111a] rounded-2xl border border-rose-900/60">
+                <p className="text-rose-300 font-semibold">Unable to load vibe projects.</p>
+                <p className="text-slate-400 font-mono text-sm mt-2">Check your connection and try again.</p>
+                <button
+                  type="button"
+                  onClick={fetchVibes}
+                  className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-xl bg-rose-500/10 text-rose-200 border border-rose-500/40 hover:bg-rose-500/20 transition-colors text-sm font-semibold"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry loading
+                </button>
               </div>
             ) : filteredVibes.length === 0 ? (
               <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800">
