@@ -87,7 +87,7 @@ export function App() {
                   BLAKE'S LAB
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">Simulated Ara Customer Tech Station</p>
+              <p className="text-[11px] text-slate-400 font-mono">Live command center for rapid product experiments</p>
             </div>
           </div>
 
@@ -129,7 +129,7 @@ export function App() {
       </header>
 
       {/* Hero Stats */}
-      <div className="bg-gradient-to-b from-[#0c0c14] to-[#08080d] border-b border-slate-800/60 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gradient-to-b from-[#0c0c14] to-[#08080d] border-b border-slate-800/60 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="p-4 rounded-2xl bg-[#11111a]/60 border border-slate-800/80">
             <span className="text-xs text-slate-400 font-mono">Live Vibecodes</span>
