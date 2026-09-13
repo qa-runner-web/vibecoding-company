@@ -87,6 +87,7 @@ export function App() {
                   BLAKE'S LAB
                 </span>
               </div>
+              <p className="text-[11px] text-slate-300 font-mono">Proof you can see.</p>
               <p className="text-[11px] text-slate-400 font-mono">Simulated Ara Customer Tech Station</p>
             </div>
           </div>
