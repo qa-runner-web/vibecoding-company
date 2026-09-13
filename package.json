@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "qa:package-metadata": "node scripts/package-metadata.js",
+    "test:package-metadata": "node --test test/package-metadata.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
