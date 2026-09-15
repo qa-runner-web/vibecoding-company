@@ -27,6 +27,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'generator' | 'prompts' | 'playbook'>('gallery');
   const [vibes, setVibes] = useState<VibeProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,16 +39,17 @@ export function App() {
   async function fetchVibes() {
     try {
       setLoading(true);
+      setLoadError(null);
       const { data, error } = await supabase
         .from('vibes')
         .select('*')
         .order('stars', { ascending: false });
 
-      if (data && !error) {
-        setVibes(data);
-      }
+      if (error) throw error;
+      setVibes(data ?? []);
     } catch (e) {
       console.error('Error fetching vibes', e);
+      setLoadError('Vibes could not be loaded. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -244,8 +246,19 @@ export function App() {
 
             {/* Grid */}
             {loading ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-20" role="status" aria-label="Loading vibes">
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
+              </div>
+            ) : loadError ? (
+              <div role="alert" className="text-center py-16 bg-[#11111a] rounded-2xl border border-rose-900/60">
+                <p className="text-rose-300 font-mono text-sm">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={fetchVibes}
+                  className="mt-4 px-4 py-2 rounded-xl bg-rose-500/15 text-rose-200 border border-rose-500/40 hover:bg-rose-500/25 text-xs font-semibold transition-colors"
+                >
+                  Retry loading vibes
+                </button>
               </div>
             ) : filteredVibes.length === 0 ? (
               <div className="text-center py-16 bg-[#11111a] rounded-2xl border border-slate-800">
