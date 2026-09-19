@@ -13,3 +13,4 @@ The official platform and command center for Blake's 10x AI Dev Station.
 - **AI Brain**: Google Gemini 2.0 Flash (Free tier API)
 - **Database**: Supabase PostgreSQL with Row Level Security
 - **Deploy**: Vercel Global Edge Network
+kilroy was here.
