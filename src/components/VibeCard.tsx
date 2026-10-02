@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, Zap, Terminal, ExternalLink, Sparkles, Flame, CheckCircle2, Clock } from 'lucide-react';
 import { VibeProject } from '../types';
 import { supabase } from '../lib/supabase';
+import { formatStars } from '../lib/format';
 
 interface VibeCardProps {
   project: VibeProject;
@@ -137,7 +138,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({ project, onStarUpdate }) => 
               }`}
             >
               <Star className={`w-3.5 h-3.5 ${hasStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
-              <span>{stars}</span>
+              <span>{formatStars(stars)}</span>
             </button>
           </div>
         </div>
