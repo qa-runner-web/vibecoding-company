@@ -14,8 +14,9 @@ export function median(values) {
 
   const lower = sorted[middle - 1];
   const upper = sorted[middle];
-  // Avoid overflow when adding two large values or subtracting opposite signs.
+  // Opposite signs can be added without overflow; adding first also avoids
+  // rounding each subnormal operand separately.
   return lower < 0 && upper > 0
-    ? lower / 2 + upper / 2
+    ? (lower + upper) / 2
     : lower + (upper - lower) / 2;
 }

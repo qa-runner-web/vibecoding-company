@@ -24,3 +24,27 @@ test('does not mutate the input', () => {
   assert.deepEqual(unique(values), ['a', 'b']);
   assert.deepEqual(values, ['a', 'b', 'a']);
 });
+
+// Additional coverage retained from the integration branch.
+test('removes duplicates while retaining first-occurrence order', () => {
+  assert.deepEqual(unique([3, 1, 3, 2, 1]), [3, 1, 2]);
+});
+
+test('returns a new empty array for empty input', () => {
+  const input = [];
+  const result = unique(input);
+  assert.deepEqual(result, []);
+  assert.notEqual(result, input);
+});
+
+test('uses value equality for NaN and reference identity for objects', () => {
+  const object = {};
+  const other = {};
+  assert.deepEqual(unique([NaN, NaN, object, other, object]), [NaN, object, other]);
+});
+
+test('does not mutate its input', () => {
+  const input = ['a', 'a', 'b'];
+  unique(input);
+  assert.deepEqual(input, ['a', 'a', 'b']);
+});
