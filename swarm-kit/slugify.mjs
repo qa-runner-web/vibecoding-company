@@ -1,9 +1,11 @@
-/** Convert a string to a lowercase, hyphen-separated ASCII URL slug. */
-export function slugify(value) {
-  return value
+/** Convert text to a lowercase, hyphen-separated slug. */
+export function slugify(text) {
+  return text
     .normalize('NFKD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+export default slugify;

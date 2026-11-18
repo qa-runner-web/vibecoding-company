@@ -1,4 +1,4 @@
-/** Restrict a number to the inclusive range [min, max]. */
+/** Restrict a number to the inclusive interval [min, max]. */
 export function clamp(value, min, max) {
   if ([value, min, max].some(number => typeof number !== 'number' || Number.isNaN(number))) {
     throw new TypeError('value and bounds must be numbers');

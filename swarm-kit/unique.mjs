@@ -1,4 +1,4 @@
-/** Return distinct values in their first-occurrence order. */
+/** Return distinct values in first-occurrence order using SameValueZero equality. */
 export function unique(values) {
   return [...new Set(values)];
 }

@@ -1,9 +1,10 @@
-/** Capitalize each word, retaining punctuation and whitespace. */
+/** Capitalize each word and lowercase its remaining letters, preserving separators. */
 export function titlecase(sentence) {
-  return sentence.toLowerCase().replace(
-    /\p{L}[\p{L}\p{M}\p{N}]*(?:['’][\p{L}\p{M}\p{N}]+)*/gu,
-    word => word.replace(/^\p{L}/u, first => first.toUpperCase()),
-  );
+  return sentence.replace(/[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:['’][\p{L}\p{M}\p{N}]+)*/gu, word => {
+    const lower = word.toLowerCase();
+    const first = Array.from(lower)[0];
+    return first.toUpperCase() + lower.slice(first.length);
+  });
 }
 
 export default titlecase;
